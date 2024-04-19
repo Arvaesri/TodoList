@@ -2,23 +2,14 @@
 
 namespace TodoListApi.Models
 {
-    internal class TodoItem
+    public class TodoItem
     {
-        public Guid Id {  get; private set; }
-        public string Title { get; private set; }
-        public string Description { get; private set; }
-        public bool Completed { get; private set; }
-        public readonly DateTime created; 
-        public DateTime Updated { get; private set; }
-        public DateTime? dueDate;
-        public TodoItem(string title, string description, DateTime? dueDate)
-        {
-            this.Id = Guid.NewGuid();
-            this.Title = title;
-            this.Description = description;
-            this.Completed = false;
-            this.created = DateTime.Now;
-            this.dueDate = dueDate;
-        }
+        public Guid Id {  get; private set; } = Guid.NewGuid();
+        public string Title { get; private set; } = string.Empty;
+        public string Description { get; private set; } = string.Empty;
+        public bool Completed { get; private set; } = false;
+        public readonly DateTime created = DateTime.Now;
+        public DateTime Updated { get; private set; } = DateTime.Now;
+        public DateTime? dueDate { get; private set; } = null;
     }
 }
