@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using TodoListApi.Models;
+﻿using TodoListApi.Models;
 
-namespace TodoListApi.Services
+namespace TodoListApi.Interfaces
 {
     public interface ITodoItemService
     {

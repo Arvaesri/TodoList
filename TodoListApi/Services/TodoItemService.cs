@@ -1,41 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TodoListApi.Interfaces;
+using TodoListApi.Models;
 
 namespace TodoListApi.Services
 {
-    public class TodoItemService : ITodoItemService
+    public class ToDoItemService : ITodoItemService
     {
+        private readonly IToDoRepository _repository; // Dependency for data access
+
+        public ToDoItemService(IToDoRepository repository)
+        {
+            _repository = repository;
+        }
+
         public async Task<TodoItem> CreateTodoItemAsync(string title, string description, DateTime? dueDate)
         {
-            var todoItem = new TodoItem(title, description, dueDate);
-            // You might add data access logic here to save the todoItem to a database
-            return await Task.FromResult(todoItem);
+            if (string.IsNullOrEmpty(title))
+            {
+                throw new ArgumentException("Title cannot be empty or null.");
+            }
+
+            var newTodo = new TodoItem
+            {
+                Title = title,
+                Description = description,
+                DueDate = dueDate
+            };
+
+            await _repository.AddAsync(newTodo);
+            return newTodo;
         }
 
         public async Task<IEnumerable<TodoItem>> GetAllTodoItemsAsync()
         {
-            // You might add data access logic here to retrieve all todoItems from a database
-            return await Task.FromResult(new List<TodoItem>());
+            var allTodos = await _repository.GetAllAsync();
+            return allTodos;
         }
 
         public async Task<TodoItem> GetTodoItemByIdAsync(Guid id)
         {
-            // You might add data access logic here to retrieve a todoItem by its id from a database
-            return await Task.FromResult<TodoItem>(null);
+            var todo = await _repository.GetByIdAsync(id);
+            return todo;
         }
 
         public async Task UpdateTodoItemAsync(Guid id, string title, string description, bool completed, DateTime updated, DateTime? dueDate)
         {
-            // You might add data access logic here to update a todoItem in a database
-            await Task.CompletedTask;
+            var existingTodo = await _repository.GetByIdAsync(id);
+
+            if (existingTodo == null)
+            {
+                throw new ArgumentException("Todo item with the specified ID does not exist.");
+            }
+
+            existingTodo.Title = title;
+            existingTodo.Description = description;
+            existingTodo.Completed = completed;
+            existingTodo.Updated = updated;
+            existingTodo.DueDate = dueDate;
+
+            await _repository.UpdateAsync(existingTodo);
         }
 
         public async Task DeleteTodoItemAsync(Guid id)
         {
-            // You might add data access logic here to delete a todoItem from a database
-            await Task.CompletedTask;
+            await _repository.DeleteAsync(id);
         }
     }
 }
