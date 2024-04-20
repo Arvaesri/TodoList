@@ -5,8 +5,6 @@ namespace TodoListApi.Db;
 
 public class TodoItemContext : DbContext
 {
+    public TodoItemContext (DbContextOptions<TodoItemContext> options) : base(options) {}    
     public DbSet<TodoItem> Todoitems {get; set;}
-    public TodoItemContext (DbContext.Options<TodoItemContext> options) : base(options){
-
-    }
 }
