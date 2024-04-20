@@ -1,72 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using TodoListApi.Db;
 using TodoListApi.Interfaces;
 using TodoListApi.Models;
+using System.Net;
 
 namespace TodoListApi.Services
 {
-    public class ToDoItemService : ITodoItemService
+    public class TodoItemService : ITodoItemService
     {
-        private readonly IToDoRepository _repository; // Dependency for data access
+        private readonly TodoItemContext _context;
 
-        public ToDoItemService(IToDoRepository repository)
+        public TodoItemService(TodoItemContext context)
         {
-            _repository = repository;
+            _context = context;
         }
 
         public async Task<TodoItem> CreateTodoItemAsync(string title, string description, DateTime? dueDate)
         {
             if (string.IsNullOrEmpty(title))
             {
-                throw new ArgumentException("Title cannot be empty or null.");
+                throw new HttpStatusCodeException(HttpStatusCode.BadRequest, "Title cannot be empty or null.");
             }
 
             var newTodo = new TodoItem
             {
                 Title = title,
                 Description = description,
-                DueDate = dueDate
+                DueDate = dueDate,
+                Deleted = false
             };
 
-            await _repository.AddAsync(newTodo);
+            await _context.AddAsync(newTodo);
+            await _context.SaveChangesAsync();
             return newTodo;
-        }
-
-        public async Task<IEnumerable<TodoItem>> GetAllTodoItemsAsync()
-        {
-            var allTodos = await _repository.GetAllAsync();
-            return allTodos;
         }
 
         public async Task<TodoItem> GetTodoItemByIdAsync(Guid id)
         {
-            var todo = await _repository.GetByIdAsync(id);
+            var todo = await _context.FindAsync<TodoItem>(id) ?? throw new HttpStatusCodeException(HttpStatusCode.NotFound, "Todo item with the specified ID does not exist.");
             return todo;
         }
 
-        public async Task UpdateTodoItemAsync(Guid id, string title, string description, bool completed, DateTime updated, DateTime? dueDate)
+        public async Task<TodoItem> UpdateTodoItemAsync(Guid id, string title, string description, bool completed, DateTime? dueDate)
         {
-            var existingTodo = await _repository.GetByIdAsync(id);
-
-            if (existingTodo == null)
-            {
-                throw new ArgumentException("Todo item with the specified ID does not exist.");
-            }
+            var existingTodo = await _context.FindAsync<TodoItem>(id) ?? throw new HttpStatusCodeException(HttpStatusCode.NotFound, "Todo item with the specified ID does not exist.");
 
             existingTodo.Title = title;
             existingTodo.Description = description;
             existingTodo.Completed = completed;
-            existingTodo.Updated = updated;
+            existingTodo.Updated = DateTime.Now;
             existingTodo.DueDate = dueDate;
-
-            await _repository.UpdateAsync(existingTodo);
+            await _context.SaveChangesAsync();
+            return existingTodo;
         }
 
-        public async Task DeleteTodoItemAsync(Guid id)
+        public async Task<bool> DeleteTodoItemAsync(Guid id)
         {
-            await _repository.DeleteAsync(id);
+            var existingTodo = await _context.FindAsync<TodoItem>(id) ?? throw new HttpStatusCodeException(HttpStatusCode.NotFound, "Todo item with the specified ID does not exist.");
+            existingTodo.Deleted = true;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
